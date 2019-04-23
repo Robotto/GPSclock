@@ -1,69 +1,59 @@
 //#define LOCALTZ_POSIX	"CET-1CEST,M3.5.0/2,M10.5.0/3"		// Time in Berlin
 
-#include <TimeLib.h>                  
+#define GMToffset 1 //offset in hours from UTC/GMT
 
+#include <TimeLib.h> //Thanks Paul! :)                  
 #include <SevSeg.h>
+
 SevSeg sevseg; //Instantiate a seven segment controller object
+
 void setup() {
+  Serial1.begin(9600); 
+  Serial.begin(115200);
 
   byte digitPins[] = {A1, 15, 16, 9, 7, 5};
   //                    A    B   C   D   E   F   G  DP
   byte segmentPins[] = {A0,  6, A3, 10, 14,  4,  8, A2}; 
-//  sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments,
+  //sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments,
   sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, false);
   sevseg.setBrightness(100);
-
-  Serial1.begin(9600); 
-  Serial.begin(115200);
 }
 
-#define GMToffset 1
-
-
-
 void loop() {
+  static byte yearUTC, monthUTC, dayUTC, hourUTC, Minute, Second; 
+  static String rxString;
+  static bool gotTime=false;
+  static bool gotDate=false;
+  static unsigned long gotDateAt;
+  static unsigned long gotTimeAt;
 
-static byte yearUTC, monthUTC, dayUTC, hourUTC, Minute, Second; 
-static String rxString;
-static bool gotTime=false;
-static bool gotDate=false;
-static unsigned long gotDateAt;
-static unsigned long gotTimeAt;
-
-
-//  if(Serial1.available()) Serial.print(Serial1.read(),HEX); 
-//  if(Serial1.available()) Serial.write(Serial1.read()); 
-
-  if(Serial1.available()) 
-  {
+  if(Serial1.available()) {
     char rxChar=Serial1.read();
     rxString+=String(rxChar);
     if(rxChar=='\n') {
-      String identifier=rxString.substring(0,6);
       //Serial.print(rxString);
+      String identifier=rxString.substring(0,6);
       if(identifier == "$GPGGA") {
-          //Serial.print(rxString);
-          String timeString=rxString.substring(7,13);
-          //Serial.println(timeString);
-          
-          if(timeString==",,,,,0") gotTime=false; //this is what the substring looks like before GPS fix
-          else{
-          
-            hourUTC=(byte)timeString.substring(0,2).toInt();
-            Minute=(byte)timeString.substring(2,4).toInt();
-            Second=(byte)timeString.substring(4,6).toInt();
-            //Serial.print(hourUTC); Serial.print(':'); Serial.print(Minute); Serial.print(':'); Serial.println(Second);
+        String timeString=rxString.substring(7,13);
+        //Serial.println(timeString);
+        
+        if(timeString==",,,,,0") gotTime=false; //this is what the substring looks like before GPS fix
+        else{
+          hourUTC=(byte)timeString.substring(0,2).toInt();
+          Minute=(byte)timeString.substring(2,4).toInt();
+          Second=(byte)timeString.substring(4,6).toInt();
+          //Serial.print(hourUTC); Serial.print(':'); Serial.print(Minute); Serial.print(':'); Serial.println(Second);
 
-            gotTime=true;
-            gotTimeAt=millis();
+          gotTime=true;
+          gotTimeAt=millis();
 
-            if(gotDate){
-              setTime(hourUTC, Minute, Second, dayUTC, monthUTC, yearUTC);
-              adjustTime(GMToffset*SECS_PER_HOUR); 
-              if(isDst(now())) adjustTime(SECS_PER_HOUR);
-              printTime();
-            }
+          if(gotDate){
+            setTime(hourUTC, Minute, Second, dayUTC, monthUTC, yearUTC);
+            adjustTime(GMToffset*SECS_PER_HOUR); 
+            if(isDst(now())) adjustTime(SECS_PER_HOUR);
+            printTime();
           }
+        }
       }
       
       else if(identifier == "$GPRMC") {
@@ -82,14 +72,14 @@ static unsigned long gotTimeAt;
           dayUTC   = (byte)rxString.substring(dateStartIndex,dateStartIndex+2).toInt();
           monthUTC = (byte)rxString.substring(dateStartIndex+2,dateStartIndex+2+2).toInt();
           yearUTC  = (byte)rxString.substring(dateStartIndex+4,dateStartIndex+4+2).toInt();
+          
           gotDate=true;
           gotDateAt=millis();
           //Serial.print(dayUTC); Serial.print(' '); Serial.print(monthUTC); Serial.print(' '); Serial.println(yearUTC);
         }        
       }
-          //else if(identifier == "$GPZDA") Serial.print(rxString); //i'd like to see one of these...
-          //Serial.println("------");
- 
+      //else if(identifier == "$GPZDA") Serial.print(rxString); //i'd like to see one of these...
+      //Serial.println("------");
       rxString="";
     }
   }
@@ -101,8 +91,7 @@ static unsigned long gotTimeAt;
   sevseg.refreshDisplay(); // Must run repeatedly
 }
 
-static inline printTime()
-{
+static inline printTime() {
   String timeConcat="";
   if(hour()<10) timeConcat+="0";
   timeConcat+=String(hour());
@@ -126,7 +115,7 @@ static inline printTime()
 #define OCTOBER 10
 #define SHIFTHOUR 2 
 
-bool isDst(time_t epoch){ //eats local time
+bool isDst(time_t epoch) { //eats local time
 
         uint8_t         mon, mday, hh, day_of_week, d;
         int             n;
