@@ -13,126 +13,109 @@ void setup() {
   sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, false);
   sevseg.setBrightness(100);
 
-    Serial1.begin(9600); 
-    Serial.begin(115200);
+  Serial1.begin(9600); 
+  Serial.begin(115200);
 }
 
-int GMToffset=1;
+#define GMToffset 1
 
-unsigned long tick;
-char rxChar;
-String rxString;
-String timeString;
 
-bool gotTime=false;
-bool gotDate=false;
-unsigned long gotDateAt;
-unsigned long gotTimeAt;
-
-int yearUTC;
-byte monthUTC, dayUTC, hourUTC, Minute, Second; 
 
 void loop() {
+
+static byte yearUTC, monthUTC, dayUTC, hourUTC, Minute, Second; 
+static String rxString;
+static bool gotTime=false;
+static bool gotDate=false;
+static unsigned long gotDateAt;
+static unsigned long gotTimeAt;
+
 
 //  if(Serial1.available()) Serial.print(Serial1.read(),HEX); 
 //  if(Serial1.available()) Serial.write(Serial1.read()); 
 
   if(Serial1.available()) 
   {
-    rxChar=Serial1.read();
+    char rxChar=Serial1.read();
     rxString+=String(rxChar);
     if(rxChar=='\n') {
-          String identifier=rxString.substring(0,6);
+      String identifier=rxString.substring(0,6);
+      //Serial.print(rxString);
+      if(identifier == "$GPGGA") {
           //Serial.print(rxString);
-          if(identifier == "$GPGGA") {
-              //Serial.print(rxString);
-              timeString=rxString.substring(7,13);
-              //Serial.println(timeString);
-              
-              if(timeString==",,,,,0") gotTime=false; //this is what the substring looks like before GPS fix
-
-              else{
-              
-                hourUTC=(byte)timeString.substring(0,2).toInt();
-                Minute=(byte)timeString.substring(2,4).toInt();
-                Second=(byte)timeString.substring(4,6).toInt();
-
-                gotTime=true;
-                gotTimeAt=millis();
-
-                if(gotDate){
-              
-                  setTime(hourUTC, Minute, Second, dayUTC, monthUTC, yearUTC);
-
-                  adjustTime(GMToffset*SECS_PER_HOUR); 
-
-                  if(isDst(now())) adjustTime(SECS_PER_HOUR);
-                }
-            }
-              //Serial.print(hourUTC); Serial.print(':'); Serial.print(Minute); Serial.print(':'); Serial.println(Second);
-
-          }
-          else if(identifier == "$GPRMC") {
-
-            if(rxString=="$GPRMC,,V,,,,,,,,,,N*53") gotDate=false;
-            else{
-            //$GPRMC,222920.00,V,,,,,,,150419,,,N*7C
-              Serial.println(rxString);
-              int dateStartIndex=rxString.lastIndexOf(',');
-              //Serial.println("dateStartIndex: " + String(dateStartIndex)); 
-              for(int commaCounter=1; commaCounter<4; commaCounter++) {
-                dateStartIndex=rxString.lastIndexOf(',', dateStartIndex-1); //work backwards through the commas
-                //Serial.println("dateStartIndex: " + String(dateStartIndex)); 
-              }
-              dateStartIndex++; //position of the first char of the date.
-            
-              dayUTC   =(byte)rxString.substring(dateStartIndex,dateStartIndex+2).toInt();
-              monthUTC =(byte)rxString.substring(dateStartIndex+2,dateStartIndex+2+2).toInt();
-              yearUTC  = 2000 + rxString.substring(dateStartIndex+4,dateStartIndex+4+2).toInt();
-              gotDate=true;
-              gotDateAt=millis();
-            
-
-              //Serial.print(dayUTC); Serial.print(' '); Serial.print(monthUTC); Serial.print(' '); Serial.println(yearUTC);
-            }        
-          }
+          String timeString=rxString.substring(7,13);
+          //Serial.println(timeString);
           
+          if(timeString==",,,,,0") gotTime=false; //this is what the substring looks like before GPS fix
+          else{
+          
+            hourUTC=(byte)timeString.substring(0,2).toInt();
+            Minute=(byte)timeString.substring(2,4).toInt();
+            Second=(byte)timeString.substring(4,6).toInt();
+            //Serial.print(hourUTC); Serial.print(':'); Serial.print(Minute); Serial.print(':'); Serial.println(Second);
+
+            gotTime=true;
+            gotTimeAt=millis();
+
+            if(gotDate){
+              setTime(hourUTC, Minute, Second, dayUTC, monthUTC, yearUTC);
+              adjustTime(GMToffset*SECS_PER_HOUR); 
+              if(isDst(now())) adjustTime(SECS_PER_HOUR);
+              printTime();
+            }
+          }
+      }
+      
+      else if(identifier == "$GPRMC") {
+        if(rxString=="$GPRMC,,V,,,,,,,,,,N*53") gotDate=false;
+        else {
+          //$GPRMC,222920.00,V,,,,,,,150419,,,N*7C
+          Serial.println(rxString);
+          int dateStartIndex=rxString.lastIndexOf(',');
+          //Serial.println("dateStartIndex: " + String(dateStartIndex)); 
+          for(int commaCounter=1; commaCounter<4; commaCounter++) {
+            dateStartIndex=rxString.lastIndexOf(',', dateStartIndex-1); //work backwards through the commas
+            //Serial.println("dateStartIndex: " + String(dateStartIndex)); 
+          }
+          dateStartIndex++; //position of the first char of the date.
+        
+          dayUTC   = (byte)rxString.substring(dateStartIndex,dateStartIndex+2).toInt();
+          monthUTC = (byte)rxString.substring(dateStartIndex+2,dateStartIndex+2+2).toInt();
+          yearUTC  = (byte)rxString.substring(dateStartIndex+4,dateStartIndex+4+2).toInt();
+          gotDate=true;
+          gotDateAt=millis();
+          //Serial.print(dayUTC); Serial.print(' '); Serial.print(monthUTC); Serial.print(' '); Serial.println(yearUTC);
+        }        
+      }
           //else if(identifier == "$GPZDA") Serial.print(rxString); //i'd like to see one of these...
           //Serial.println("------");
-            
+ 
       rxString="";
     }
   }
 
   if(millis()>gotTimeAt+1500) gotTime=false;
   if(millis()>gotDateAt+1500) gotDate=false;
-
-
-  if(gotDate && gotTime){
-    if(millis()>tick+1000){
-      tick=millis();
-      String timeConcat="";
-      if(hour()<10) timeConcat+="0";
-      timeConcat+=String(hour());
-      if(minute()<10) timeConcat+="0";
-      timeConcat+=String(minute());
-      if(second()<10) timeConcat+="0";
-      timeConcat+=String(second());
-
-      char charArray[7]; //HHMMSS\0
-      timeConcat.toCharArray(charArray,7);
-      sevseg.setChars(charArray);
-      //Serial.println(charArray);
-    }
-  }
-  else sevseg.setChars("NO GPS");
-
+  if(!gotDate || !gotTime) sevseg.setChars("NO GPS");
 
   sevseg.refreshDisplay(); // Must run repeatedly
-
-
 }
 
+static inline printTime()
+{
+  String timeConcat="";
+  if(hour()<10) timeConcat+="0";
+  timeConcat+=String(hour());
+  if(minute()<10) timeConcat+="0";
+  timeConcat+=String(minute());
+  if(second()<10) timeConcat+="0";
+  timeConcat+=String(second());
+
+  char charArray[7]; //HHMMSS\0
+  timeConcat.toCharArray(charArray,7);
+  sevseg.setChars(charArray);
+  //Serial.println(charArray);
+}
 
 /*
  * Edited from avr-libc/include/util/eu_dst.h
