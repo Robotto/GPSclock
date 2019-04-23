@@ -15,14 +15,9 @@ void setup() {
 
     Serial1.begin(9600); 
     Serial.begin(115200);
-    //byte settingsArray[] = {0x03, 0xFA, 0x00, 0x00, 0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //
-    //configureUblox(settingsArray); 
-
-
 }
 
 int GMToffset=1;
-int dstOffset=1;
 
 unsigned long tick;
 char rxChar;
@@ -41,6 +36,7 @@ void loop() {
 
 //  if(Serial1.available()) Serial.print(Serial1.read(),HEX); 
 //  if(Serial1.available()) Serial.write(Serial1.read()); 
+
   if(Serial1.available()) 
   {
     rxChar=Serial1.read();
