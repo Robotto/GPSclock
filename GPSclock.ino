@@ -15,7 +15,7 @@ void setup() {
   //                    A    B   C   D   E   F   G  DP
   byte segmentPins[] = {A0,  6, A3, 10, 14,  4,  8, A2}; 
   //sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments,
-  sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, false);
+  sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, true);
   sevseg.setBrightness(100);
 }
 
@@ -60,7 +60,7 @@ void loop() {
         if(rxString=="$GPRMC,,V,,,,,,,,,,N*53") gotDate=false;
         else {
           //$GPRMC,222920.00,V,,,,,,,150419,,,N*7C
-          Serial.println(rxString);
+          //Serial.println(rxString);
           int dateStartIndex=rxString.lastIndexOf(',');
           //Serial.println("dateStartIndex: " + String(dateStartIndex)); 
           for(int commaCounter=1; commaCounter<4; commaCounter++) {
@@ -111,58 +111,47 @@ static inline printTime() {
  * (c)2012 Michael Duane Rice All rights reserved.
 */
 
+//DST goes true on the last sunday of march @ 2:00 (CET)
+//DST goes false on the last sunday of october @ 3:00 (CEST)
+ 
 #define MARCH 3
 #define OCTOBER 10
 #define SHIFTHOUR 2 
 
-bool isDst(time_t epoch) { //eats local time
+bool isDst(time_t epoch) { //eats local time (CET/CEST)
 
-        uint8_t         mon, mday, hh, day_of_week, d;
-        int             n;
-                        
-                        //DST goes true on the last sunday of march @ 2:00
-                        //DST goes false on the last sunday of october @ 3:00
+  uint8_t mon, mday, hh, day_of_week, d;
+  int n;
 
-                        mon = month(epoch)-1;
-                        day_of_week = weekday(epoch)-1; //paul's library sets sunday==1, this code expects "days since sunday" http://www.cplusplus.com/reference/ctime/tm/
-                        mday = day(epoch) - 1;
-                        hh = hour(epoch);
+  mon = month(epoch)-1;
+  day_of_week = weekday(epoch)-1; //paul's library sets sunday==1, this code expects "days since sunday" http://www.cplusplus.com/reference/ctime/tm/
+  mday = day(epoch);
+  hh = hour(epoch);
 
-       if              ((mon > MARCH) && (mon < OCTOBER))
-                            return true;
+  if ((mon > MARCH) && (mon < OCTOBER)) return true;
+  if (mon < MARCH) return false;
+  if (mon > OCTOBER) return false;
 
-        if              (mon < MARCH)
-                            return false;
-        if              (mon > OCTOBER)
-                            return false;
+  //determine mday of last Sunday 
+  n = mday;
+  n -= day_of_week + 1;
+  n += 7;
+  d = n % 7 + 1;  // date of first Sunday
 
-         //determine mday of last Sunday 
-                        n = mday;
-                        n -= day_of_week;
-                        n += 7;
-                        d = n % 7;  // date of first Sunday
+  n = 31 - d;
+  n /= 7; //number of Sundays left in the month 
 
-                        n = 31 - d;
-                        n /= 7; //number of Sundays left in the month 
+  d = d + 7 * n;  // mday of final Sunday 
 
-                        d = d + 7 * n;  // mday of final Sunday 
-
-        if              (mon == MARCH) {
-            if (d < mday)
-                return false;
-            if (d > mday)
-                return true;
-            if (hh < SHIFTHOUR)
-                return false;
-            return true;
-        }
-        //the month is october:
-        if              (d < mday)
-                            return true;
-        if              (d > mday)
-                            return false;
-        if              (hh < SHIFTHOUR+1)
-                            return true;
-                        return false;
-
-    }
+  if (mon == MARCH) {
+    if (d < mday) return false;
+    if (d > mday) return true;
+    if (hh < SHIFTHOUR) return false;
+    return true;
+  }
+  //the month is october:
+  if (d < mday) return true;
+  if (d > mday) return false;
+  if (hh < SHIFTHOUR+1) return true;
+  return false;
+}
