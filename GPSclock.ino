@@ -123,7 +123,7 @@ bool isDst(time_t epoch) { //eats local time (CET/CEST)
   uint8_t mon, mday, hh, day_of_week, d;
   int n;
 
-  mon = month(epoch)-1;
+  mon = month(epoch);
   day_of_week = weekday(epoch)-1; //paul's library sets sunday==1, this code expects "days since sunday" http://www.cplusplus.com/reference/ctime/tm/
   mday = day(epoch);
   hh = hour(epoch);
@@ -134,9 +134,10 @@ bool isDst(time_t epoch) { //eats local time (CET/CEST)
 
   //determine mday of last Sunday 
   n = mday;
-  n -= day_of_week + 1;
+  n -= day_of_week;
   n += 7;
-  d = n % 7 + 1;  // date of first Sunday
+  d = n % 7;  // date of first Sunday
+  if(d==0) d=7; //if the month starts on a monday, the first sunday is on the seventh.
 
   n = 31 - d;
   n /= 7; //number of Sundays left in the month 
@@ -144,14 +145,14 @@ bool isDst(time_t epoch) { //eats local time (CET/CEST)
   d = d + 7 * n;  // mday of final Sunday 
 
   if (mon == MARCH) {
-    if (d < mday) return false;
-    if (d > mday) return true;
+    if (d > mday) return false;
+    if (d < mday) return true;
     if (hh < SHIFTHOUR) return false;
     return true;
   }
   //the month is october:
-  if (d < mday) return true;
-  if (d > mday) return false;
+  if (d > mday) return true; 
+  if (d < mday) return false; 
   if (hh < SHIFTHOUR+1) return true;
   return false;
 }
