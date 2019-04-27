@@ -11,7 +11,7 @@ truth = { 0: [0,28],
           5: [2,30],
           6: [1,29] }
 
-dates_in_month = range(31) #1-31
+dates_in_month = range(31) #0-30
 
 days_of_week = range(7) #0-6 ... sunday = 0
 
@@ -36,7 +36,7 @@ for day_of_week in days_of_week:
         n = int(n/7) #number of Sundays left in the month
         d = d + 7 * n #mday of final Sunday
 
-        if d == 31:
+        if d == 31: #Dirty fix...
         	d=24
 
 

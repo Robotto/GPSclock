@@ -15,7 +15,7 @@ void setup() {
   //                    A    B   C   D   E   F   G  DP
   byte segmentPins[] = {A0,  6, A3, 10, 14,  4,  8, A2}; 
   //sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments,
-  sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, true);
+  sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, false);
   sevseg.setBrightness(100);
 }
 
@@ -125,7 +125,7 @@ bool isDst(time_t epoch) { //eats local time (CET/CEST)
 
   mon = month(epoch);
   day_of_week = weekday(epoch)-1; //paul's library sets sunday==1, this code expects "days since sunday" http://www.cplusplus.com/reference/ctime/tm/
-  mday = day(epoch);
+  mday = day(epoch)-1; //zero index the day as well
   hh = hour(epoch);
 
   if ((mon > MARCH) && (mon < OCTOBER)) return true;
@@ -143,6 +143,11 @@ bool isDst(time_t epoch) { //eats local time (CET/CEST)
   n /= 7; //number of Sundays left in the month 
 
   d = d + 7 * n;  // mday of final Sunday 
+
+  //If the 1st of the month is a thursday, the last sunday will be on the 25th.
+  //Apparently this algorithm calculates it to be on the 32nd...
+  //Dirty fix, until something smoother comes along:
+  if(d==31) d=24;
 
   if (mon == MARCH) {
     if (d > mday) return false;
