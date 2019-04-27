@@ -19,9 +19,8 @@ days_of_week = range(7) #0-6 ... sunday = 0
 for day_of_week in days_of_week:
     for date in dates_in_month:
 
-
         #find the day of the week # for the 1st of the month, given only current date and day of week.:
-        DOWonthefirst = ((6+day_of_week-date%7)%7+1)%7 #i know it's ugly but it works.
+        DOWonthefirst = (day_of_week-date)%7
 
         #determine mday of last Sunday
         n = date
