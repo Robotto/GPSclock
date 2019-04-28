@@ -15,7 +15,7 @@ void setup() {
   //                    A    B   C   D   E   F   G  DP
   byte segmentPins[] = {A0,  6, A3, 10, 14,  4,  8, A2}; 
   //sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments,
-  sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, false);
+  sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, true);
   sevseg.setBrightness(100);
 }
 
