@@ -2,8 +2,8 @@
 
 #define GMToffset 1 //offset in hours from UTC/GMT
 
-#include <TimeLib.h> //Thanks Paul! :)                  
-#include <SevSeg.h>
+#include <TimeLib.h> //https://github.com/PaulStoffregen/Time                  
+#include <SevSeg.h>  //https://github.com/DeanIsMe/SevSeg
 
 SevSeg sevseg; //Instantiate a seven segment controller object
 
