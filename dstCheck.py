@@ -35,8 +35,8 @@ for day_of_week in days_of_week:
         n = int(n/7) #number of Sundays left in the month
         d = d + 7 * n #mday of final Sunday
 
-        if d == 31: #Dirty fix...
-        	d=24
+#        if d == 31: #Dirty fix...
+#        	d=24
 
 
         if truth[DOWonthefirst][1] !=d:
