@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #day of week at start of month : [date of first sunday,date of last sunday]
 # (sunday = 0)

@@ -2,8 +2,8 @@
 
 #define GMToffset 1 //offset in hours from UTC/GMT
 
-#include <TimeLib.h> //Thanks Paul! :)                  
-#include <SevSeg.h>
+#include <TimeLib.h> //https://github.com/PaulStoffregen/Time                  
+#include <SevSeg.h>  //https://github.com/DeanIsMe/SevSeg
 
 SevSeg sevseg; //Instantiate a seven segment controller object
 
@@ -15,7 +15,7 @@ void setup() {
   byte digitPins[] = {A1, 15, 16, 9, 7, 5};
   //                    A    B   C   D   E   F   G  DP
   byte segmentPins[] = {A0,  6, A3, 10, 14,  4,  8, A2}; 
-  //sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments,
+  //sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments, updateWithDelays, leadingZeros, disableDecPoint);
   sevseg.begin(COMMON_CATHODE, 6, digitPins, segmentPins, true, false, false, true);
   sevseg.setBrightness(100);
 }
