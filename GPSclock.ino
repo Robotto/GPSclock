@@ -8,7 +8,8 @@
 SevSeg sevseg; //Instantiate a seven segment controller object
 
 void setup() {
-  Serial1.begin(9600); 
+  Serial1.begin(9600); //default
+  
   Serial.begin(115200);
 
   byte digitPins[] = {A1, 15, 16, 9, 7, 5};
@@ -30,6 +31,7 @@ void loop() {
   if(Serial1.available()) {
     char rxChar=Serial1.read();
     rxString+=String(rxChar);
+    Serial.print(rxChar);
     if(rxChar=='\n') {
       //Serial.print(rxString);
       String identifier=rxString.substring(0,6);
